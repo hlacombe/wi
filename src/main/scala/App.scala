@@ -2,6 +2,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.feature.{OneHotEncoderEstimator, StringIndexer, StringIndexerModel, VectorIndexer}
 import org.apache.spark.sql._
+import org.apache.spark.sql.functions._
 
 object App {
 
@@ -17,6 +18,8 @@ object App {
       .config(conf)
       .getOrCreate()
 
+    val sc = spark.sparkContext
+
     var dataframe: DataFrame = getDataframe(spark)
     // Preprocessing
     dataframe = dataframe.withColumn("size0", dataframe.col("size")(0))
@@ -24,8 +27,9 @@ object App {
     dataframe = dataframe.drop(dataframe.col("size"))
     dataframe = dataframe.drop(dataframe.col("impid"))
     dataframe = dataframe.drop(dataframe.col("exchange"))
+    dataframe = dataframe.drop(dataframe.col("timestamp"))
 
-
+    /*
     val allIAB = List(
       "IAB1","IAB1-1","IAB1-2","IAB1-3","IAB1-4","IAB1-5","IAB1-6","IAB1-7",
       "IAB2", "IAB2-1", "IAB2-2","IAB2-3","IAB2-4","IAB2-5","IAB2-6","IAB2-7","IAB2-8","IAB2-9","IAB2-10","IAB2-11","IAB2-12","IAB2-13","IAB2-14","IAB2-15","IAB2-16","IAB2-17","IAB2-18","IAB2-19","IAB2-20","IAB2-21","IAB2-22","IAB2-23",
@@ -53,13 +57,30 @@ object App {
       "IAB25", "IAB25-1", "IAB25-2","IAB25-3","IAB25-4","IAB25-5","IAB25-6","IAB25-7",
       "IAB26", "IAB26-1", "IAB26-2","IAB26-3","IAB26-4"
     )
-
-    // IAB SHIT (don't use when not the code)
     for(iab <- allIAB){
-      dataframe = dataframe.withColumn(iab,dataframe.col("interests").contains(iab))
-    }
+      dataframe = dataframe.withColumn(iab, when(dataframe.col("interests").contains(iab),1).otherwise(0))
+    }*/
+
     dataframe = dataframe.drop(dataframe.col("interests"))
 
+    dataframe = dataframe.withColumn("is_App", when(dataframe.col("appOrSite")=== "app",1).otherwise(0))
+    dataframe = dataframe.withColumn("is_Site", when(dataframe.col("appOrSite")=== "site",1).otherwise(0))
+    dataframe = dataframe.drop(dataframe.col("appOrSite"))
+
+    dataframe = indexCol(dataframe, Array("type", "city", "os", "publisher"))
+
+
+    val mainIAB =
+      Array("IAB1","IAB2","IAB3","IAB4","IAB5","IAB6","IAB7","IAB8","IAB9","IAB10","IAB11","IAB12","IAB13",
+        "IAB14","IAB15","IAB16","IAB17","IAB18","IAB19","IAB20","IAB21","IAB22","IAB23","IAB24","IAB25","IAB26")
+/*
+    for(iab <- mainIAB){
+      dataframe = dataframe.withColumn(iab, when(dataframe.col("interests").contains(iab),1).otherwise(0))
+    }*/
+
+    // dataframe.show(1)
+
+    dataframe.printSchema()
     val someData = dataframe.randomSplit(Array(10,90))
     val testData = someData(0)
     val trainData = someData(1)
@@ -77,9 +98,9 @@ object App {
             .foreach( println(_))
     */
 
-    testData.printSchema()
-   // val df_numerics = indexCol(trainData, trainData.columns)
-   // val dfHot = encodeCol(df_numerics,Array("appOrSite","bidfloor", "city", "interests", "media", "network", "publisher", "size", "timestamp", "type", "os"))
+    // val df_numerics = indexCol(testData, Array("appOrSite", "city", "os", "publisher"))
+    // df_numerics.show(1)
+    // val dfHot = encodeCol(df_numerics, testData.columns)
 
     // dfHot.show(15)
 
@@ -115,12 +136,11 @@ object App {
   def indexCol(df: DataFrame, cols: Array[String]): DataFrame = {
     var newDf = df
     for(c <- cols){
-      val si = new StringIndexer()
+      val indexer = new StringIndexer()
         .setInputCol(c)
-        .setOutputCol(c + "-num")
-      val sm: StringIndexerModel = si.fit(newDf)
-      newDf = sm.transform(newDf).drop(c)
-      newDf = newDf.withColumnRenamed(c + "-num", c)
+        .setOutputCol(c+"_index")
+
+      newDf = indexer.fit(newDf).transform(newDf).drop(newDf.col(c)).withColumnRenamed(c + "_index", c)
     }
     newDf
   }
