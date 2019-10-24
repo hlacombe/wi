@@ -35,30 +35,24 @@ object App {
     dataframe = Etl.removeColumns(dataframe, Array("network", "user", "timestamp", "exchange", "impid"))
     dataframe = Etl.replaceNullStringColumns(dataframe, Array("city", "publisher", "os", "media"))
     // dataframe = Etl.splitInterests(dataframe)
+    dataframe = Etl.removeColumns(dataframe, Array("interests"))
+
     dataframe = Etl.labelToInt(dataframe)
-    dataframe.printSchema()
-    dataframe.show(1)
-    /*
 
-    val assembler = new VectorAssembler()
-      .setInputCols(dataframe.columns.diff(Array("label")))
-      .setOutputCol("features")
+    dataframe = Etl.IndexStringArray(dataframe, Array("city", "publisher", "os", "media", "size0", "size1", "type"))
+    val dataframeV = Etl.vectorize(dataframe)
 
-    val lpoints = assembler.transform(dataframe).select("features", "label")
-
-    val splits = lpoints.randomSplit(Array(10,90))
+    val splits = dataframeV.randomSplit(Array(10,90))
     val testData = splits(0).cache()
     val trainData = splits(1).cache()
 
     val layers = Array[Int](dataframe.columns.size-1, 10, 10, 2)
-
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
       .setBlockSize(128)
       .setSeed(1234L)
       .setMaxIter(100)
 
-    // train the model
     val model = trainer.fit(trainData)
 
     // compute accuracy on the test set
@@ -68,36 +62,9 @@ object App {
       .setMetricName("accuracy")
 
     println(s"Test set accuracy = ${evaluator.evaluate(predictionAndLabels)}")
-*/
-    /*
-        val newTest =
-          test
-              .select("appOrSite","bidfloor", "city", "interests", "media", "network", "publisher", "size", "timestamp", "type", "os", "label")
-              .printSchema()
 
-        val getAllCities = test
-            .select("city")
-            .distinct()
-            .collect
-            .foreach( println(_))
-    */
+    println("===================ok===================")
 
-    // val df_numerics = indexCol(testData, Array("appOrSite", "city", "os", "publisher"))
-    // df_numerics.show(1)
-    // val dfHot = encodeCol(df_numerics, testData.columns)
-
-    // dfHot.show(15)
-
-    /**val labelIndexer = new StringIndexer()
-        .setInputCol("label")
-        .setOutputCol("indexedLabel")
-        .fit(dataframe)
-
-    val featureIndexer = new VectorIndexer()
-        .setInputCol("features")
-        .setOutputCol("indexedFeatures")
-        .fit(dataframe)
-    **/
     spark.stop()
   }
 
@@ -107,26 +74,4 @@ object App {
       .option("inferSchema", value = true)
       .json(path)
   }
-
-  def encodeCol(df: DataFrame, cols: Array[String]): DataFrame = {
-    var newDf = df
-      val encoder = new OneHotEncoderEstimator()
-        .setInputCols(cols)
-        .setOutputCols(cols.map( s => s +"-encoded"))
-        .setDropLast(false)
-    newDf
-  }
-
-  def indexCol(df: DataFrame, cols: Array[String]): DataFrame = {
-    var newDf = df
-    for(c <- cols){
-      val indexer = new StringIndexer()
-        .setInputCol(c)
-        .setOutputCol(c+"_index")
-
-      newDf = indexer.fit(newDf).transform(newDf).drop(newDf.col(c)).withColumnRenamed(c + "_index", c)
-    }
-    newDf
-  }
-
 }

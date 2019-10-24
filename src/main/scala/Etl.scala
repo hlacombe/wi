@@ -10,6 +10,38 @@ import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.types.{StructField, StructType}
 
 object Etl{
+
+  def indexString(df: DataFrame, c: String): DataFrame = {
+    var newDf = df
+    val indexer = new StringIndexer()
+      .setInputCol(c)
+      .setOutputCol(c+"I")
+
+    newDf =
+      indexer.fit(df)
+        .transform(df)
+        .drop(newDf.col(c))
+        .withColumnRenamed(c+"I", c)
+    newDf
+  }
+
+  def IndexStringArray(df: DataFrame, cols: Array[String]): DataFrame = {
+    var newDf = df
+    for (c <- cols){
+      newDf = indexString(newDf, c)
+    }
+    newDf
+  }
+
+  def vectorize(df: DataFrame): DataFrame = {
+    val assembler = new VectorAssembler()
+      .setInputCols(df.columns.diff(Array("label")))
+      .setOutputCol("features")
+
+    assembler.transform(df).select("features", "label")
+  }
+
+
   def removeColumns(df: DataFrame, cols: Array[String]): DataFrame = {
     var newDf = df
     for(c <- cols){
@@ -42,8 +74,8 @@ object Etl{
       when(newDf.col("type").isNull,4)
         .when(newDf.col("type")=== "CLICK",4)
         .otherwise(newDf.col("type")))
-        .drop(newDf.col("type"))
-        .withColumnRenamed("typeC", "type")
+      .drop(newDf.col("type"))
+      .withColumnRenamed("typeC", "type")
 
     newDf = setNullableStateOfColumn(newDf, "type", false)
     newDf
@@ -67,8 +99,8 @@ object Etl{
       newDf = newDf.withColumn(c+"C",
         when(newDf.col(c).isNull,"BLANK")
           .otherwise(newDf.col(c)))
-          .drop(newDf.col(c))
-          .withColumnRenamed(c+"C", c)
+        .drop(newDf.col(c))
+        .withColumnRenamed(c+"C", c)
 
       newDf = setNullableStateOfColumn(newDf, c, false)
     }
@@ -129,7 +161,6 @@ object Etl{
     }
     newDf = newDf.drop("interests")
     newDf
-
   }
 
 }
