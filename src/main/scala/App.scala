@@ -46,6 +46,8 @@ object App {
     val testData = splits(0).cache()
     val trainData = splits(1).cache()
 
+    // MultilayerPerceptronClassificationModel model = MultilayerPerceptronClassificationModel.load(getSavedModelPath());
+
     val layers = Array[Int](dataframe.columns.size-1, 10, 10, 2)
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -54,6 +56,7 @@ object App {
       .setMaxIter(100)
 
     val model = trainer.fit(trainData)
+    //model.save("C:\\modelSpark")
 
     // compute accuracy on the test set
     val result = model.transform(testData)
