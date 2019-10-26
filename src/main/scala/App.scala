@@ -1,13 +1,8 @@
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.ml.feature.{OneHotEncoderEstimator, StringIndexer, StringIndexerModel, VectorIndexer}
+import org.apache.spark.{SparkConf}
 import org.apache.spark.sql._
-import org.apache.spark.sql.functions._
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.VectorAssembler
-import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.sql.types.{StructField, StructType}
 
 object App {
 
@@ -34,8 +29,8 @@ object App {
     dataframe = Etl.cleanBidFloor(dataframe)
     dataframe = Etl.removeColumns(dataframe, Array("network", "user", "timestamp", "exchange", "impid"))
     dataframe = Etl.replaceNullStringColumns(dataframe, Array("city", "publisher", "os", "media"))
-    // dataframe = Etl.splitInterests(dataframe)
-    dataframe = Etl.removeColumns(dataframe, Array("interests"))
+    dataframe = Etl.splitInterests(dataframe)
+    // dataframe = Etl.removeColumns(dataframe, Array("interests"))
 
     dataframe = Etl.labelToInt(dataframe)
 
@@ -56,8 +51,7 @@ object App {
       .setMaxIter(100)
 
     val model = trainer.fit(trainData)
-    //model.save("C:\\modelSpark")
-
+    model.save("modelSpark")
     // compute accuracy on the test set
     val result = model.transform(testData)
     val predictionAndLabels = result.select("prediction", "label")
@@ -72,7 +66,7 @@ object App {
   }
 
   def getDataframe(spark: SparkSession): DataFrame =  {
-    val path = "data.json"
+    val path = "small-data.json"
     spark.read
       .option("inferSchema", value = true)
       .json(path)

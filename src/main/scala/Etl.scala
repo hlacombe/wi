@@ -1,12 +1,7 @@
-import org.apache.log4j.{Level, Logger}
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.ml.feature.{OneHotEncoderEstimator, StringIndexer, StringIndexerModel, VectorIndexer}
+import org.apache.spark.ml.feature.{StringIndexer}
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
-import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
-import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
-import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.types.{StructField, StructType}
 
 object Etl{
