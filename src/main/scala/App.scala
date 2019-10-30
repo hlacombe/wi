@@ -36,7 +36,9 @@ object App {
 
     val dataframeV = Etl.vectorize(dataframe)
 
-    RandomForest.predict(dataframeV)
+    MultilayerPerceptron.predict(dataframeV, dataframe)
+
+    //RandomForest.predict(dataframeV)
 
     spark.stop()
   }
