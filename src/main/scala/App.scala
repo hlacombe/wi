@@ -1,12 +1,16 @@
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.{SparkConf}
+import org.apache.spark.SparkConf
 import org.apache.spark.sql._
-import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
+import org.apache.spark.ml.classification.{MultilayerPerceptronClassificationModel, MultilayerPerceptronClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
+import java.util.Calendar
+
 
 object App {
 
   def main(args: Array[String]): Unit = {
+
+    val date = Calendar.getInstance().getTime
 
     Logger.getLogger("org").setLevel(Level.ERROR)
     Logger.getLogger("akka").setLevel(Level.ERROR)
@@ -44,17 +48,19 @@ object App {
     // MultilayerPerceptronClassificationModel model = MultilayerPerceptronClassificationModel.load(getSavedModelPath());
 
     val layers = Array[Int](dataframe.columns.size-1, 10, 10, 2)
-    val trainer = new MultilayerPerceptronClassifier()
+    val trainer: MultilayerPerceptronClassifier = new MultilayerPerceptronClassifier()
       .setLayers(layers)
       .setBlockSize(128)
       .setSeed(1234L)
       .setMaxIter(100)
 
-    val model = trainer.fit(trainData)
-    model.save("modelSpark")
+    val model: MultilayerPerceptronClassificationModel = trainer.fit(trainData)
+    model.save( "modelSpark/"+date.toString)
     // compute accuracy on the test set
-    val result = model.transform(testData)
+    val result: DataFrame = model.transform(testData)
+
     val predictionAndLabels = result.select("prediction", "label")
+
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
 
