@@ -1,7 +1,6 @@
-import org.apache.spark.ml.feature.{StringIndexer}
+import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
-import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.types.{StructField, StructType}
 
 object Etl{
