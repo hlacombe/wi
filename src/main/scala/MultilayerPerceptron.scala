@@ -24,7 +24,7 @@ object MultilayerPerceptron {
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
 
-    println(s"Test set accuracy = ${evaluator.evaluate(predictionAndLabels)}")
+    println(s"Accuracy Perceptron = ${evaluator.evaluate(predictionAndLabels)}")
   }
 
 }

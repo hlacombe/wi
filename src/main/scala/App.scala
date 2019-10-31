@@ -51,6 +51,7 @@ object App {
               }
 
               MultilayerPerceptron.train(dataframeV, nbFeatures, "model/Perceptron")
+              RandomForest.train(dataframeV, "model/RandomForest")
 
 
             case "predict" =>
@@ -58,6 +59,9 @@ object App {
               if(!modelFolder.exists()){
                 "No model pre-trained"
               } else {
+                MultilayerPerceptron.predict(dataframeV, "model/Perceptron")
+                RandomForest.predict(dataframeV, "model/RandomForest")
+
 
               }
 

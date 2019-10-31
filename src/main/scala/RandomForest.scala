@@ -3,12 +3,10 @@ import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}
 import org.apache.spark.sql.DataFrame
-import java.util.Calendar
 
 object RandomForest {
-  def predict(dataframeV: DataFrame, modelPath: String): Unit ={
-    val startTime = Calendar.getInstance.getTime
 
+  def train(dataframeV: DataFrame, modelPath: String): Unit = {
     val labelIndexer = new StringIndexer()
       .setInputCol("label")
       .setOutputCol("indexedLabel")
@@ -19,11 +17,6 @@ object RandomForest {
       .setOutputCol("indexedFeatures")
       .setMaxCategories(4) // features with > 4 distinct values are treated as continuous.
       .fit(dataframeV)
-
-    val splits = dataframeV.randomSplit(Array(70,30))
-
-    val testData = splits(0).cache()
-    val trainData = splits(1).cache()
 
     val dt = new RandomForestClassifier()
       .setLabelCol("label")
@@ -40,19 +33,20 @@ object RandomForest {
     val pipeline = new Pipeline()
       .setStages(Array(labelIndexer, featureIndexer, dt, labelConverter))
 
-    val model = pipeline.fit(trainData)
+    val model = pipeline.fit(dataframeV)
     model.save(modelPath)
-    val endTime = Calendar.getInstance.getTime
+  }
 
-    val modelLoaded = PipelineModel.load(modelPath)
-    val predictions = model.transform(testData)
+  def predict(dataframeV: DataFrame, modelPath: String): Unit = {
+    val model = PipelineModel.load(modelPath)
+    val predictions = model.transform(dataframeV)
     
     val evaluator = new MulticlassClassificationEvaluator()
       .setLabelCol("indexedLabel")
       .setPredictionCol("prediction")
       .setMetricName("accuracy")
     val accuracy = evaluator.evaluate(predictions)
-    println("Test Error = " + (1.0 - accuracy))
+    println("Accuracy RandomForest = " + (accuracy))
 
     //val treeModel = model.stages(2).asInstanceOf[DecisionTreeClassificationModel]
     //println("Learned classification tree model:\n" + treeModel.toDebugString)
