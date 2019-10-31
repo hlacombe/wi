@@ -4,6 +4,21 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StructField, StructType}
 
 object Etl{
+  def etlVectorize(df: DataFrame) = {
+    var newDf = df
+    newDf = splitSize(newDf)
+    newDf = splitAppOrSite(newDf)
+    newDf = cleanType(newDf)
+    newDf = cleanBidFloor(newDf)
+    newDf = removeColumns(newDf, Array("network", "user", "timestamp", "exchange", "impid"))
+    newDf = replaceNullStringColumns(newDf, Array("city", "publisher", "os", "media"))
+    newDf = splitInterests(newDf)
+    newDf = labelToInt(newDf)
+    newDf = IndexStringArray(newDf, Array("city", "publisher", "os", "media", "size0", "size1", "type"))
+    val nbFeature = newDf.columns.size-1
+    (vectorize(newDf), nbFeature)
+  }
+
 
   def indexString(df: DataFrame, c: String): DataFrame = {
     var newDf = df

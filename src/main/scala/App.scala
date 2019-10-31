@@ -1,6 +1,7 @@
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql._
+import better.files._
 
 object App {
 
@@ -14,47 +15,84 @@ object App {
       .getLogger("akka")
       .setLevel(Level.ERROR)
 
-    val conf = new SparkConf()
-      .setAppName("WI")
-      .setMaster("local")
+    if (args.length != 2){
+      println(s"Invalid argument number [train|predict] <json file>")
+    } else {
+      val action = args(0)
+      val fileJson = args(1)
+      if (!File(fileJson).exists()){
+        println(s"Invalid json file '${fileJson}'")
+      } else {
+        if (action != "train" && action != "predict"){
+          println(s"Invalid argument [train|predict] <json file>")
+        } else {
+          val conf = new SparkConf()
+            .setAppName("WI")
+            .setMaster("local")
 
-    val spark = SparkSession
-      .builder()
-      .config(conf)
-      .getOrCreate()
+          val spark = SparkSession
+            .builder()
+            .config(conf)
+            .getOrCreate()
 
-    var dataframe = spark.read
-      .option("inferSchema", value = true)
-      .json("small-data.json")
+          var dataframe = spark.read
+            .option("inferSchema", value = true)
+            .json(fileJson)
 
-    // ETL
-    dataframe = Etl.splitSize(dataframe)
-    dataframe = Etl.splitAppOrSite(dataframe)
-    dataframe = Etl.cleanType(dataframe)
-    dataframe = Etl.cleanBidFloor(dataframe)
-    dataframe = Etl.removeColumns(dataframe, Array("network", "user", "timestamp", "exchange", "impid"))
-    dataframe = Etl.replaceNullStringColumns(dataframe, Array("city", "publisher", "os", "media"))
-    dataframe = Etl.splitInterests(dataframe)
-    //dataframe = Etl.removeColumns(dataframe, Array("interests"))
-    dataframe = Etl.labelToInt(dataframe)
-    dataframe = Etl.IndexStringArray(dataframe, Array("city", "publisher", "os", "media", "size0", "size1", "type"))
-    val dataframeV = Etl.vectorize(dataframe)
+          val (dataframeV, nbFeatures) = Etl.etlVectorize(dataframe)
+          val modelFolder = getModelFolder()
+
+          action match {
+            case "train" =>
+              println(s"Training on '${fileJson}'")
+
+              if (modelFolder.exists()){
+                modelFolder.delete()
+              }
+
+              MultilayerPerceptron.train(dataframeV, nbFeatures, "model/Perceptron")
 
 
-    // Perceptron //
-    val splits = dataframeV.randomSplit(Array(20,80))
-    val testData = splits(0).cache()
-    val trainData = splits(1).cache()
+            case "predict" =>
+              println(s"Prediction on '${fileJson}'")
+              if(!modelFolder.exists()){
+                "No model pre-trained"
+              } else {
 
-    MultilayerPerceptron.train(trainData, dataframe, "model/Perceptron")
-    MultilayerPerceptron.predict(testData, "model/Perceptron")
+              }
 
-    // Random Forest //
-    RandomForest.predict(dataframeV, "model/RandomForest")
 
-    // Other Methode
+            case _ => println("Error")
+          }
 
-    spark.stop()
+          spark.stop()
+        }
+
+      }
+
+      /*
+      // Perceptron //
+      val splits = dataframeV.randomSplit(Array(20,80))
+      val testData = splits(0).cache()
+      val trainData = splits(1).cache()
+
+      MultilayerPerceptron.train(trainData, dataframe, "model/Perceptron")
+      MultilayerPerceptron.predict(testData, "model/Perceptron")
+
+      // Random Forest //
+      RandomForest.predict(dataframeV, "model/RandomForest")
+
+      // Other Methode
+
+
+
+       */
+    }
+
+  }
+
+  def getModelFolder(): File = {
+    return File("model")
   }
 
 }
