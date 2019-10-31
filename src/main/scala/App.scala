@@ -6,21 +6,28 @@ object App {
 
   def main(args: Array[String]): Unit = {
 
-    Logger.getLogger("org").setLevel(Level.ERROR)
-    Logger.getLogger("akka").setLevel(Level.ERROR)
+    Logger
+      .getLogger("org")
+      .setLevel(Level.ERROR)
 
-    val conf = new SparkConf().setAppName("WI").setMaster("local")
+    Logger
+      .getLogger("akka")
+      .setLevel(Level.ERROR)
+
+    val conf = new SparkConf()
+      .setAppName("WI")
+      .setMaster("local")
 
     val spark = SparkSession
       .builder()
       .config(conf)
       .getOrCreate()
 
-    val sc = spark.sparkContext
-    var dataframe: DataFrame = getDataframe(spark)
+    var dataframe = spark.read
+      .option("inferSchema", value = true)
+      .json("small-data.json")
 
-    // Preprocessing
-
+    // ETL
     dataframe = Etl.splitSize(dataframe)
     dataframe = Etl.splitAppOrSite(dataframe)
     dataframe = Etl.cleanType(dataframe)
@@ -29,24 +36,25 @@ object App {
     dataframe = Etl.replaceNullStringColumns(dataframe, Array("city", "publisher", "os", "media"))
     dataframe = Etl.splitInterests(dataframe)
     //dataframe = Etl.removeColumns(dataframe, Array("interests"))
-
     dataframe = Etl.labelToInt(dataframe)
-
     dataframe = Etl.IndexStringArray(dataframe, Array("city", "publisher", "os", "media", "size0", "size1", "type"))
-
     val dataframeV = Etl.vectorize(dataframe)
 
-    MultilayerPerceptron.predict(dataframeV, dataframe)
 
-    //RandomForest.predict(dataframeV)
+    // Perceptron //
+    val splits = dataframeV.randomSplit(Array(20,80))
+    val testData = splits(0).cache()
+    val trainData = splits(1).cache()
+
+    MultilayerPerceptron.train(trainData, dataframe, "model/Perceptron")
+    MultilayerPerceptron.predict(testData, "model/Perceptron")
+
+    // Random Forest //
+    RandomForest.predict(dataframeV, "model/RandomForest")
+
+    // Other Methode
 
     spark.stop()
   }
 
-  def getDataframe(spark: SparkSession): DataFrame =  {
-    val path = "small-data.json"
-    spark.read
-      .option("inferSchema", value = true)
-      .json(path)
-  }
 }

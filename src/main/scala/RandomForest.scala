@@ -1,11 +1,11 @@
-import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.{ Pipeline, PipelineModel }
 import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}
 import org.apache.spark.sql.DataFrame
 
 object RandomForest {
-  def predict(dataframeV: DataFrame): Unit ={
+  def predict(dataframeV: DataFrame, modelPath: String): Unit ={
 
     val labelIndexer = new StringIndexer()
       .setInputCol("label")
@@ -39,7 +39,11 @@ object RandomForest {
       .setStages(Array(labelIndexer, featureIndexer, dt, labelConverter))
 
     val model = pipeline.fit(trainData)
+    model.save(modelPath)
+
+    val modelLoaded = PipelineModel.load(modelPath)
     val predictions = model.transform(testData)
+    
 
     val evaluator = new MulticlassClassificationEvaluator()
       .setLabelCol("indexedLabel")
