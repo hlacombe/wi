@@ -4,10 +4,25 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StructField, StructType}
 
 object Etl{
+  def etlVectorize(df: DataFrame): (DataFrame, Int) = {
+    var newDf = df
+    newDf = splitSize(newDf)
+    newDf = splitAppOrSite(newDf)
+    newDf = cleanType(newDf)
+    newDf = cleanBidFloor(newDf)
+    newDf = removeColumns(newDf, Array("network", "user", "timestamp", "exchange", "impid"))
+    newDf = splitInterests(newDf)
+    newDf = labelToInt(newDf)
+    newDf = IndexStringArray(newDf, Array("city", "publisher", "os", "media", "size0", "size1", "type"))
+    (vectorize(newDf), newDf.columns.size-1)
+  }
+
 
   def indexString(df: DataFrame, c: String): DataFrame = {
     var newDf = df
     val indexer = new StringIndexer()
+      .setStringOrderType("alphabetAsc")
+      .setHandleInvalid("keep")
       .setInputCol(c)
       .setOutputCol(c+"I")
 
@@ -84,20 +99,6 @@ object Etl{
       .withColumnRenamed("bidfloorC", "bidfloor")
 
     newDf = setNullableStateOfColumn(newDf, "bidfloor", false)
-    newDf
-  }
-
-  def replaceNullStringColumns(df: DataFrame, cols: Array[String]): DataFrame = {
-    var newDf = df
-    for(c <- cols){
-      newDf = newDf.withColumn(c+"C",
-        when(newDf.col(c).isNull,"BLANK")
-          .otherwise(newDf.col(c)))
-        .drop(newDf.col(c))
-        .withColumnRenamed(c+"C", c)
-
-      newDf = setNullableStateOfColumn(newDf, c, false)
-    }
     newDf
   }
 
