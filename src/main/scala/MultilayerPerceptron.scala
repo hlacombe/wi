@@ -15,6 +15,7 @@ object MultilayerPerceptron {
 
     val model = trainer.fit(dataframeV)
     model.save(modelPath)
+    println("Perceptron model saved")
   }
 
   def predict(dataToPredict: DataFrame, modelPath: String): Unit = {

@@ -8,6 +8,8 @@ object RandomForest {
 
   def train(dataframeV: DataFrame, modelPath: String): Unit = {
     val labelIndexer = new StringIndexer()
+      .setStringOrderType("alphabetAsc")
+      .setHandleInvalid("keep")
       .setInputCol("label")
       .setOutputCol("indexedLabel")
       .fit(dataframeV)
@@ -35,6 +37,7 @@ object RandomForest {
 
     val model = pipeline.fit(dataframeV)
     model.save(modelPath)
+    println("RandomForest model Saved")
   }
 
   def predict(dataframeV: DataFrame, modelPath: String): Unit = {
