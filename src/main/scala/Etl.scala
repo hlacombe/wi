@@ -17,7 +17,7 @@ object Etl{
     newDf = splitAppOrSite(newDf)
     newDf = cleanType(newDf)
     newDf = cleanBidFloor(newDf)
-    newDf = removeColumns(newDf, Array("network", "user", "timestamp", "exchange", "impid"))
+    newDf = removeColumns(newDf, Array("user", "timestamp", "exchange", "impid"))
     newDf = splitInterests(newDf)
     newDf = labelToInt(newDf)
 
@@ -32,6 +32,13 @@ object Etl{
     if (File("model/pipelineETL").exists()){
       PipelineModel.load("model/pipelineETL")
     } else {
+
+      val indexerNetwork = new StringIndexer()
+        .setStringOrderType("alphabetAsc")
+        .setHandleInvalid("keep")
+        .setInputCol("network")
+        .setOutputCol("networkIndex")
+
       val indexerCity = new StringIndexer()
         .setStringOrderType("alphabetAsc")
         .setHandleInvalid("keep")
@@ -68,14 +75,14 @@ object Etl{
         .setInputCol("type")
         .setOutputCol("typeIndex")
 
-      val allCols = allIAB.toArray ++ Array("cityIndex", "mediaIndex", "osIndex", "size0Index", "size1Index", "is_App", "is_Site", "typeIndex", "bidfloor")
+      val allCols = allIAB.toArray ++ Array("networkIndex","cityIndex", "mediaIndex", "osIndex", "size0Index", "size1Index", "is_App", "is_Site", "typeIndex", "bidfloor")
 
       val assembler = new VectorAssembler()
         .setInputCols(allCols)
         .setOutputCol("features")
 
       val pipelineEtl = new Pipeline()
-        .setStages(Array(indexerCity, indexerMedia, indexerOs, indexerSize0, indexerSize1, indexerType, assembler))
+        .setStages(Array(indexerNetwork, indexerCity, indexerMedia, indexerOs, indexerSize0, indexerSize1, indexerType, assembler))
 
       val model = pipelineEtl.fit(newDf)
       model.save("model/pipelineETL")
@@ -140,6 +147,15 @@ object Etl{
     newDf = newDf.withColumn("is_App", when(newDf.col("appOrSite")=== "app",1).otherwise(0))
     newDf = newDf.withColumn("is_Site", when(newDf.col("appOrSite")=== "site",1).otherwise(0))
     newDf = newDf.drop(newDf.col("appOrSite"))
+    newDf
+  }
+  
+  def cleanOS(df: DataFrame): DataFrame = {
+    var newDf = df
+    newDf = newDf
+      .withColumn("OS", upper(newDf.col("os")))
+      .drop(newDf.col("os"))
+      .withColumnRenamed("OS", "os")
     newDf
   }
 
