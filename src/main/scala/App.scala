@@ -39,7 +39,7 @@ object App {
             .option("inferSchema", value = true)
             .json(fileJson)
 
-          val (dataframeV, nbFeatures) = Etl.etlVectorize(dataframe)
+          val (dataframeV, nbFeatures) = Etl.etlVectorize(dataframe, action)
           val modelFolder = getModelFolder()
 
           action match {
@@ -50,7 +50,7 @@ object App {
                 modelFolder.delete()
               }
 
-              MultilayerPerceptron.train(dataframeV, nbFeatures, "model/Perceptron")
+              //MultilayerPerceptron.train(dataframeV, nbFeatures, "model/Perceptron")
               RandomForest.train(dataframeV, "model/RandomForest")
 
 
@@ -59,7 +59,7 @@ object App {
               if(!modelFolder.exists()){
                 "No model pre-trained"
               } else {
-                MultilayerPerceptron.predict(dataframeV, "model/Perceptron")
+                //MultilayerPerceptron.predict(dataframeV, "model/Perceptron")
                 RandomForest.predict(dataframeV, "model/RandomForest")
 
 
