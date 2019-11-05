@@ -17,7 +17,7 @@ object RandomForest {
     val featureIndexer = new VectorIndexer()
       .setInputCol("features")
       .setOutputCol("indexedFeatures")
-      .setMaxCategories(4) // features with > 4 distinct values are treated as continuous.
+      .setMaxCategories(100) // features with > 4 distinct values are treated as continuous.
       .fit(dataframeV)
 
     val dt = new RandomForestClassifier()

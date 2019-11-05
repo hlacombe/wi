@@ -51,8 +51,8 @@ object App {
               }
 
               //MultilayerPerceptron.train(dataframeV, nbFeatures, "model/Perceptron")
-              RandomForest.train(dataframeV, "model/RandomForest")
-
+              //RandomForest.train(dataframeV, "model/RandomForest")
+              LogisticReg.train(dataframeV, "model/logisticRegression")
 
             case "predict" =>
               println(s"Prediction on '${fileJson}'")
@@ -60,7 +60,8 @@ object App {
                 "No model pre-trained"
               } else {
                 //MultilayerPerceptron.predict(dataframeV, "model/Perceptron")
-                RandomForest.predict(dataframeV, "model/RandomForest")
+                //RandomForest.predict(dataframeV, "model/RandomForest")
+                LogisticReg.predict(dataframeV, "model/logisticRegression")
 
 
               }

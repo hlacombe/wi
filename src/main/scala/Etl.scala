@@ -176,6 +176,14 @@ object Etl{
     newDf
   }
 
+  def labelToFloat(df: DataFrame): DataFrame = {
+    var newDf = df
+    newDf = newDf.withColumnRenamed("label", "labelInt")
+    newDf = newDf.withColumn("label", when(newDf.col("labelInt")=== 1,1.0).otherwise(0.0))
+    newDf = newDf.drop(newDf.col("labelInt"))
+    newDf
+  }
+
   def setNullableStateOfColumn( df: DataFrame, cn: String, nullable: Boolean) : DataFrame = {
     // get schema
     val schema = df.schema
