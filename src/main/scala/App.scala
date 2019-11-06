@@ -80,11 +80,11 @@ object App {
                   .withColumn("size", stringify(col("size")))
                   .repartition(1)
                   .write
+                  .mode ("overwrite")
                   .format("com.databricks.spark.csv")
                   .option("header", "true")
                   .save("output")
               }
-
 
             case _ => println("Error")
           }
@@ -93,24 +93,17 @@ object App {
         }
 
       }
-
       /*
       // Perceptron //
       val splits = dataframeV.randomSplit(Array(20,80))
       val testData = splits(0).cache()
       val trainData = splits(1).cache()
-
       MultilayerPerceptron.train(trainData, dataframe, "model/Perceptron")
       MultilayerPerceptron.predict(testData, "model/Perceptron")
-
       // Random Forest //
       RandomForest.predict(dataframeV, "model/RandomForest")
-
       // Other Methode
-
-
-
-       */
+      */
     }
 
   }
