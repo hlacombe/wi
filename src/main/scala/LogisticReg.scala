@@ -36,7 +36,6 @@ object LogisticReg {
     println("Confusion matrix:")
     println(metrics.confusionMatrix)
     */
-    
-    return predictions.select("prediction")
+    predictions.select("prediction")
   }
 }

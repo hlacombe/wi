@@ -90,17 +90,6 @@ object App {
         }
 
       }
-      /*
-      // Perceptron //
-      val splits = dataframeV.randomSplit(Array(20,80))
-      val testData = splits(0).cache()
-      val trainData = splits(1).cache()
-      MultilayerPerceptron.train(trainData, dataframe, "model/Perceptron")
-      MultilayerPerceptron.predict(testData, "model/Perceptron")
-      // Random Forest //
-      RandomForest.predict(dataframeV, "model/RandomForest")
-      // Other Methode
-      */
     }
 
   }

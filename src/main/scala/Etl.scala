@@ -13,7 +13,10 @@ object Etl{
     }
 
     var newDf = df
-    
+    newDf = cleanColumns(newDf,
+      Array("appOrSite", "bidfloor", "city", "exchange", "impid", "interests", "label", "media",
+        "network", "os", "publisher", "size", "timestamp", "type", "user"))
+
     newDf = splitSize(newDf)
     newDf = splitAppOrSite(newDf)
     newDf = cleanType(newDf)
@@ -236,7 +239,7 @@ object Etl{
   def labelToInt(df: DataFrame): DataFrame = {
     var newDf = df
     newDf = newDf.withColumnRenamed("label", "labelBool")
-    newDf = newDf.withColumn("label", when(newDf.col("labelBool")=== true,1).otherwise(0))
+    newDf = newDf.withColumn("label", when(newDf.col("labelBool").isNull,0).when(newDf.col("labelBool")=== true,1).otherwise(0))
     newDf = newDf.drop(newDf.col("labelBool"))
     newDf
   }
