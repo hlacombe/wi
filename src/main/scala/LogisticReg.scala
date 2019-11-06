@@ -10,7 +10,8 @@ object LogisticReg {
     val logRegModel = new LogisticRegression()
       .setFeaturesCol("features")
       .setLabelCol("label")
-      .setMaxIter(10)
+      .setMaxIter(100)
+      .setWeightCol("classWeightCol")
       .fit(dataframeV)
 
     println(s"Intercept: ${logRegModel.intercept}")
@@ -25,7 +26,6 @@ object LogisticReg {
 
     val modelLoaded = LogisticRegressionModel.load(modelPath)
     val predictions = modelLoaded.transform(df)
-    predictions.show(200)
     val predictionAndLabels = predictions.select("prediction", "labelIndex").rdd.map(x => (x.get(0).asInstanceOf[Double], x.get(1).asInstanceOf[Double]))
 
     val metrics = new MulticlassMetrics(predictionAndLabels)

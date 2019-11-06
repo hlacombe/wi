@@ -19,12 +19,35 @@ object Etl{
     newDf = cleanOS(newDf)
     newDf = cleanBidFloor(newDf)
     newDf = removeColumns(newDf, Array("timestamp", "impid"))
-    newDf = splitInterests(newDf)
     newDf = labelToInt(newDf)
+    newDf = balanceDataset(newDf)
+    newDf = splitInterests(newDf)
+
 
     var vectorized = getPipelineETL(newDf).transform(newDf)
-    vectorized = removeColumns(vectorized, vectorized.columns.diff(Array("features", "label", "labelIndex")))
-    (vectorized, newDf.columns.size-1)
+
+    vectorized = removeColumns(vectorized, vectorized.columns.diff(Array("features", "label", "labelIndex", "classWeightCol")))
+    (vectorized, newDf.columns.length-1)
+  }
+
+  def balanceDataset(dataset: DataFrame): DataFrame = {
+
+    // Re-balancing (weighting) of records to be used in the logistic loss objective function
+    val numNegatives = dataset.filter(dataset("label") === 0).count
+    val datasetSize = dataset.count
+    val balancingRatio = (datasetSize - numNegatives).toDouble / datasetSize
+
+    val calculateWeights = udf { d: Double =>
+      if (d == 0.0) {
+        1 * balancingRatio
+      }
+      else {
+        (1 * (1.0 - balancingRatio))
+      }
+    }
+
+    val weightedDataset = dataset.withColumn("classWeightCol", calculateWeights(dataset("label")))
+    weightedDataset
   }
 
   def getPipelineETL(newDf: DataFrame) = {
@@ -234,7 +257,7 @@ object Etl{
     var newDf = df
 
     for(iab <- allIAB){
-      newDf = newDf.withColumn(iab, when(newDf.col("interests").contains(iab),1).otherwise(0))
+      newDf = newDf.withColumn(iab, when(newDf.col("interests").contains(iab),1.0).otherwise(0.0))
     }
     newDf = newDf.drop("interests")
     newDf
