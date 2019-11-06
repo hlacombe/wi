@@ -53,11 +53,12 @@ object App {
               //MultilayerPerceptron.train(dataframeV, nbFeatures, "model/Perceptron")
               //RandomForest.train(dataframeV, "model/RandomForest")
               //LogisticReg.train(dataframeV, "model/logisticRegression")
-              val splits = dataframeV.randomSplit(Array(0.8, 0.2), seed = 123L)
-              val trainingData = splits(0).cache()
-              val testData = splits(1)
-              LogisticReg.train(trainingData, "model/logisticRegression")
-              LogisticReg.predict(testData, "model/logisticRegression")
+              //val splits = dataframeV.randomSplit(Array(0.8, 0.2), seed = 123L)
+              //val trainingData = splits(0).cache()
+              //val testData = splits(1)
+              //LogisticReg.train(trainingData, "model/logisticRegression")
+              //LogisticReg.predict(testData, "model/logisticRegression")
+              Bayes.predict(dataframeV,"")
 
             case "predict" =>
               println(s"Prediction on '${fileJson}'")

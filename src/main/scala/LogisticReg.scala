@@ -1,12 +1,10 @@
-import org.apache.spark.ml.{ Pipeline, PipelineModel }
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
-import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
+import org.apache.spark.sql.DataFrame
 
 object LogisticReg {
   def train(dataframeV: DataFrame, modelPath: String): Unit = {
+
     val logRegModel = new LogisticRegression()
       .setFeaturesCol("features")
       .setLabelCol("label")
