@@ -2,6 +2,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql._
 import better.files._
+import org.apache.spark.sql.functions._
 
 object App {
 
@@ -66,7 +67,22 @@ object App {
               } else {
                 //MultilayerPerceptron.predict(dataframeV, "model/Perceptron")
                 //RandomForest.predict(dataframeV, "model/RandomForest")
-                LogisticReg.predict(dataframeV, "model/logisticRegression")
+                val predictions = LogisticReg.predict(dataframeV, "model/logisticRegression")
+                val stringify = udf((vs: Seq[String]) => vs match {
+                  case null => null
+                  case _    => s"""[${vs.mkString(",")}]"""
+                })
+
+                val df1 = predictions.withColumn("id", monotonically_increasing_id)
+                val df2 = dataframe.withColumn("id", monotonically_increasing_id)
+                val df3 = df1.join(df2, df1("id") === df2("id"), "outer")
+                  .drop("id")
+                  .withColumn("size", stringify(col("size")))
+                  .repartition(1)
+                  .write
+                  .format("com.databricks.spark.csv")
+                  .option("header", "true")
+                  .save("output")
               }
 
 
