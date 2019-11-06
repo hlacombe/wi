@@ -18,7 +18,7 @@ object Etl{
         "network", "os", "publisher", "size", "timestamp", "type", "user"))
 
     newDf = splitSize(newDf)
-    newDf = splitAppOrSite(newDf)
+    //newDf = splitAppOrSite(newDf)
     newDf = cleanType(newDf)
     newDf = cleanOS(newDf)
     newDf = cleanBidFloor(newDf)
@@ -66,6 +66,12 @@ object Etl{
     if (File("model/pipelineETL").exists()){
       PipelineModel.load("model/pipelineETL")
     } else {
+
+      val indexerAppOrSite =  new StringIndexer()
+        .setStringOrderType("alphabetAsc")
+        .setHandleInvalid("keep")
+        .setInputCol("appOrSite")
+        .setOutputCol("appOrSiteIndex")
 
       val indexerLabel = new StringIndexer()
         .setStringOrderType("alphabetAsc")
@@ -127,14 +133,14 @@ object Etl{
         .setInputCol("type")
         .setOutputCol("typeIndex")
 
-      val allCols = allIAB.toArray ++ Array("exchangeIndex", "publisherIndex", "networkIndex", "cityIndex", "mediaIndex", "osIndex", "size0Index", "size1Index", "is_App", "is_Site", "typeIndex", "bidfloor")
+      val allCols = allIAB.toArray ++ Array("appOrSiteIndex", "exchangeIndex", "publisherIndex", "networkIndex", "cityIndex", "mediaIndex", "osIndex", "size0Index", "size1Index", "typeIndex", "bidfloor")
 
       val assembler = new VectorAssembler()
         .setInputCols(allCols)
         .setOutputCol("features")
 
       val pipelineEtl = new Pipeline()
-        .setStages(Array(indexerLabel, indexerExchange, indexerPublisher,indexerNetwork, indexerCity, indexerMedia, indexerOs, indexerSize0, indexerSize1, indexerType, assembler))
+        .setStages(Array(indexerAppOrSite, indexerLabel, indexerExchange, indexerPublisher,indexerNetwork, indexerCity, indexerMedia, indexerOs, indexerSize0, indexerSize1, indexerType, assembler))
 
       val model = pipelineEtl.fit(newDf)
       model.save("model/pipelineETL")
