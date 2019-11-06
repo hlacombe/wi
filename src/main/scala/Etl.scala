@@ -16,15 +16,14 @@ object Etl{
     newDf = splitSize(newDf)
     newDf = splitAppOrSite(newDf)
     newDf = cleanType(newDf)
+    newDf = cleanOS(newDf)
     newDf = cleanBidFloor(newDf)
-    newDf = removeColumns(newDf, Array("user", "timestamp", "exchange", "impid"))
+    newDf = removeColumns(newDf, Array("timestamp", "impid"))
     newDf = splitInterests(newDf)
     newDf = labelToInt(newDf)
 
     var vectorized = getPipelineETL(newDf).transform(newDf)
-    vectorized = removeColumns(vectorized, vectorized.columns.diff(Array("features", "label")))
-
-    println(vectorized.printSchema())
+    vectorized = removeColumns(vectorized, vectorized.columns.diff(Array("features", "label", "labelIndex")))
     (vectorized, newDf.columns.size-1)
   }
 
@@ -33,11 +32,30 @@ object Etl{
       PipelineModel.load("model/pipelineETL")
     } else {
 
+      val indexerLabel = new StringIndexer()
+        .setStringOrderType("alphabetAsc")
+        .setHandleInvalid("keep")
+        .setInputCol("label")
+        .setOutputCol("labelIndex")
+
+      val indexerExchange = new StringIndexer()
+        .setStringOrderType("alphabetAsc")
+        .setHandleInvalid("keep")
+        .setInputCol("exchange")
+        .setOutputCol("exchangeIndex")
+
+      val indexerPublisher = new StringIndexer()
+        .setStringOrderType("alphabetAsc")
+        .setHandleInvalid("keep")
+        .setInputCol("publisher")
+        .setOutputCol("publisherIndex")
+
       val indexerNetwork = new StringIndexer()
         .setStringOrderType("alphabetAsc")
         .setHandleInvalid("keep")
         .setInputCol("network")
         .setOutputCol("networkIndex")
+
 
       val indexerCity = new StringIndexer()
         .setStringOrderType("alphabetAsc")
@@ -75,14 +93,14 @@ object Etl{
         .setInputCol("type")
         .setOutputCol("typeIndex")
 
-      val allCols = allIAB.toArray ++ Array("networkIndex","cityIndex", "mediaIndex", "osIndex", "size0Index", "size1Index", "is_App", "is_Site", "typeIndex", "bidfloor")
+      val allCols = allIAB.toArray ++ Array("exchangeIndex", "publisherIndex", "networkIndex", "cityIndex", "mediaIndex", "osIndex", "size0Index", "size1Index", "is_App", "is_Site", "typeIndex", "bidfloor")
 
       val assembler = new VectorAssembler()
         .setInputCols(allCols)
         .setOutputCol("features")
 
       val pipelineEtl = new Pipeline()
-        .setStages(Array(indexerNetwork, indexerCity, indexerMedia, indexerOs, indexerSize0, indexerSize1, indexerType, assembler))
+        .setStages(Array(indexerLabel, indexerExchange, indexerPublisher,indexerNetwork, indexerCity, indexerMedia, indexerOs, indexerSize0, indexerSize1, indexerType, assembler))
 
       val model = pipelineEtl.fit(newDf)
       model.save("model/pipelineETL")

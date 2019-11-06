@@ -8,10 +8,12 @@ import org.apache.spark.mllib.evaluation.MulticlassMetrics
 object LogisticReg {
   def train(dataframeV: DataFrame, modelPath: String): Unit = {
     val logRegModel = new LogisticRegression()
-      .setMaxIter(100)
+      .setFeaturesCol("features")
+      .setLabelCol("label")
+      .setMaxIter(10)
       .fit(dataframeV)
 
-    println(s"Coefficients: ${logRegModel.coefficients} Intercept: ${logRegModel.intercept}")
+    println(s"Intercept: ${logRegModel.intercept}")
 
 
     logRegModel.save(modelPath)
@@ -19,11 +21,12 @@ object LogisticReg {
   }
 
   def predict(dataToPredict: DataFrame, modelPath: String): Unit = {
-    val df = Etl.labelToFloat(dataToPredict)
+    val df = dataToPredict
 
     val modelLoaded = LogisticRegressionModel.load(modelPath)
     val predictions = modelLoaded.transform(df)
-    val predictionAndLabels = predictions.select("prediction", "label").rdd.map(x => (x.get(0).asInstanceOf[Double], x.get(1).asInstanceOf[Double]))
+    predictions.show(200)
+    val predictionAndLabels = predictions.select("prediction", "labelIndex").rdd.map(x => (x.get(0).asInstanceOf[Double], x.get(1).asInstanceOf[Double]))
 
     val metrics = new MulticlassMetrics(predictionAndLabels)
     println(s"Weighted precision= ${metrics.weightedPrecision}")
