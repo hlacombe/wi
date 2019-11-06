@@ -13,6 +13,7 @@ object Etl{
     }
 
     var newDf = df
+    
     newDf = splitSize(newDf)
     newDf = splitAppOrSite(newDf)
     newDf = cleanType(newDf)
@@ -22,7 +23,6 @@ object Etl{
     newDf = labelToInt(newDf)
     newDf = balanceDataset(newDf)
     newDf = splitInterests(newDf)
-
 
     var vectorized = getPipelineETL(newDf).transform(newDf)
 
@@ -78,7 +78,6 @@ object Etl{
         .setHandleInvalid("keep")
         .setInputCol("network")
         .setOutputCol("networkIndex")
-
 
       val indexerCity = new StringIndexer()
         .setStringOrderType("alphabetAsc")

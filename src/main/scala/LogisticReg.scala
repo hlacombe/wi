@@ -8,7 +8,7 @@ object LogisticReg {
     val logRegModel = new LogisticRegression()
       .setFeaturesCol("features")
       .setLabelCol("label")
-      .setMaxIter(100)
+      .setMaxIter(2)
       .setWeightCol("classWeightCol")
       .fit(dataframeV)
 
@@ -19,11 +19,13 @@ object LogisticReg {
     println("Logistic Regression model saved")
   }
 
-  def predict(dataToPredict: DataFrame, modelPath: String): Unit = {
+  def predict(dataToPredict: DataFrame, modelPath: String): DataFrame = {
     val df = dataToPredict
 
     val modelLoaded = LogisticRegressionModel.load(modelPath)
     val predictions = modelLoaded.transform(df)
+
+    /*
     val predictionAndLabels = predictions.select("prediction", "labelIndex").rdd.map(x => (x.get(0).asInstanceOf[Double], x.get(1).asInstanceOf[Double]))
 
     val metrics = new MulticlassMetrics(predictionAndLabels)
@@ -32,5 +34,8 @@ object LogisticReg {
 
     println("Confusion matrix:")
     println(metrics.confusionMatrix)
+    */
+    
+    return predictions.select("prediction")
   }
 }

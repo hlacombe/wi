@@ -3,3 +3,6 @@
 /model
 /project/target
 data.json
+/output
+data-students.json
+modalities.txt
