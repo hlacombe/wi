@@ -40,31 +40,27 @@ object App {
             .option("inferSchema", value = true)
             .json(fileJson)
 
-          val (dataframeV, nbFeatures) = Etl.etlVectorize(dataframe, action)
           val modelFolder = getModelFolder()
+          if (modelFolder.exists() && action == "train"){
+            modelFolder.delete()
+          }
+          val (dataframeV, nbFeatures) = Etl.etlVectorize(dataframe, action)
+
 
           action match {
             case "train" =>
               println(s"Training on '${fileJson}'")
 
-              if (modelFolder.exists()){
-                modelFolder.delete()
-              }
-
               //MultilayerPerceptron.train(dataframeV, nbFeatures, "model/Perceptron")
               //RandomForest.train(dataframeV, "model/RandomForest")
-              //LogisticReg.train(dataframeV, "model/logisticRegression")
-              //val splits = dataframeV.randomSplit(Array(0.8, 0.2), seed = 123L)
-              //val trainingData = splits(0).cache()
-              //val testData = splits(1)
-              //LogisticReg.train(trainingData, "model/logisticRegression")
-              //LogisticReg.predict(testData, "model/logisticRegression")
-              Bayes.predict(dataframeV,"")
+              //Bayes.predict(dataframeV,"")
+              LogisticReg.train(dataframeV, "model/logisticRegression")
+
 
             case "predict" =>
               println(s"Prediction on '${fileJson}'")
               if(!modelFolder.exists()){
-                "No model pre-trained"
+                println("No model pre-trained")
               } else {
                 //MultilayerPerceptron.predict(dataframeV, "model/Perceptron")
                 //RandomForest.predict(dataframeV, "model/RandomForest")

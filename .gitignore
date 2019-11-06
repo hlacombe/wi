@@ -1,6 +1,6 @@
 /target
 /.idea
-/model
+# /model
 /project/target
 data.json
 /output

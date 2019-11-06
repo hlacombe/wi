@@ -50,6 +50,15 @@ object Etl{
     weightedDataset
   }
 
+  def cleanColumns(df: DataFrame, columns: Array[String]): DataFrame = {
+    import org.apache.spark.sql.functions._
+    columns.foldLeft(df)( (dataframe, column) => {
+      if (!dataframe.columns.contains(column)) dataframe.withColumn(column, lit(null))
+      else dataframe
+    }
+    )
+  }
+
   def getPipelineETL(newDf: DataFrame) = {
     if (File("model/pipelineETL").exists()){
       PipelineModel.load("model/pipelineETL")

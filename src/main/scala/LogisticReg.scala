@@ -10,6 +10,7 @@ object LogisticReg {
       .setLabelCol("label")
       .setMaxIter(2)
       .setWeightCol("classWeightCol")
+      .setFamily("binomial")
       .fit(dataframeV)
 
     println(s"Intercept: ${logRegModel.intercept}")
