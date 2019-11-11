@@ -39,6 +39,7 @@ object App {
           var dataframe = spark.read
             .option("inferSchema", value = true)
             .json(fileJson)
+            .cache
 
           val modelFolder = getModelFolder()
           if (modelFolder.exists() && action == "train"){
