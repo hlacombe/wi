@@ -9,6 +9,5 @@ All models are stored in the *model* folder. We provides this folder with pre-tr
 
 ```shell script
 sbt
-run train <path to json dataset>
 run predict <path to json dataset>
 ```
